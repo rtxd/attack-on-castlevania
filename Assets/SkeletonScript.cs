@@ -1,31 +1,34 @@
+using Assets;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class SkeletonScript : MonoBehaviour
 {
-    public float movementSpeed = 5f;
-    int health = 35;
-    STATES currState = STATES.WALKING;
-    DIRECTION facing;
     enum DIRECTION
     {
         LEFT,
         RIGHT
     }
-
-    enum STATES
+    public enum STATES
     {
         ATTACKING,
         WALKING,
         DYING,
         IDLE
     }
-
+    public STATES currState;
+    DIRECTION facing;
+    //Animator animator;
+    public float movementSpeed = 5f;
+    int health = 35;
+    public Animator animator;
     void Start()
     {
-        
-        if(transform.position.x > 0)
+        currState = STATES.WALKING;
+        //animator = GetComponent<Animator>();
+        if (transform.position.x > 0)
         {
             facing = DIRECTION.LEFT;
         } else if (transform.position.x < 0)
@@ -33,7 +36,7 @@ public class SkeletonScript : MonoBehaviour
             facing = DIRECTION.RIGHT;
         }
 
-        setDirection(facing);
+        SetDirection(facing);
 
 
     }
@@ -41,8 +44,7 @@ public class SkeletonScript : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        //Debug.Log("Curr State: " + currState);
-        if(currState == STATES.WALKING)
+        if (currState == STATES.WALKING)
         {
             transform.position = new Vector3(transform.position.x + movementSpeed * Time.deltaTime, transform.position.y);
         }
@@ -50,25 +52,47 @@ public class SkeletonScript : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if(col.gameObject.tag == "Tower")
+
+        if (col.gameObject.CompareTag("Tower"))
         {
             currState = STATES.ATTACKING;
-        } else if(col.gameObject.tag == "Skeleton")
+            ChangeAnimationState(STATES.ATTACKING);
+        } else if (col.gameObject.CompareTag("Skeleton") && currState != STATES.ATTACKING)
         {
             currState = STATES.IDLE;
+            ChangeAnimationState(STATES.IDLE);
         }
     }
 
-    void setDirection(DIRECTION facingDirection)
+    void SetDirection(DIRECTION facingDirection)
     {
-        if(facingDirection == DIRECTION.LEFT)
+        if (facingDirection == DIRECTION.LEFT)
         {
             movementSpeed = movementSpeed * -1;
-        } 
+        }
         else
         {
             transform.rotation = Quaternion.Euler(0, 180f, 0);
         }
 
     }
+
+    void ChangeAnimationState(STATES newState)
+    {
+        string animName = newState switch
+        {
+            STATES.ATTACKING => "Skeleton_Attack",
+            STATES.WALKING => "Skeleton_Walk",
+            STATES.DYING => "Skeleton_Walk",
+            STATES.IDLE => "Skeleton_Idle",
+            _ => "Skeleton_Idle",
+        };
+
+        if (currState== newState)
+        {
+            animator.Play(animName);
+        }
+    }
+
+
 }
